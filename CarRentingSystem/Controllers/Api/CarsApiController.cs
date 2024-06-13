@@ -4,6 +4,7 @@
     using CarRentingSystem.Services.Cars;
     using CarRentingSystem.Services.Cars.Models;
     using Microsoft.AspNetCore.Mvc;
+    using System.Threading.Tasks;
 
     [ApiController]
     [Route("api/cars")]
@@ -15,8 +16,8 @@
             => this.cars = cars;
 
         [HttpGet]
-        public CarQueryServiceModel All([FromQuery] AllCarsApiRequestModel query) 
-            => this.cars.All(
+        public async Task<CarQueryServiceModel> All([FromQuery] AllCarsApiRequestModel query) 
+            => await this.cars.AllAsync(
                 query.Brand,
                 query.SearchTerm,
                 query.Sorting,

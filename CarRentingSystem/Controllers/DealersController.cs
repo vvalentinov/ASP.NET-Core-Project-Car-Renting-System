@@ -1,13 +1,14 @@
 ﻿namespace CarRentingSystem.Controllers
 {
     using System.Linq;
+    using System.Threading.Tasks;
     using CarRentingSystem.Data;
     using CarRentingSystem.Data.Models;
     using CarRentingSystem.Infrastructure.Extensions;
     using CarRentingSystem.Models.Dealers;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
-
+    using Microsoft.EntityFrameworkCore;
     using static WebConstants;
 
     public class DealersController : Controller
@@ -22,13 +23,13 @@
 
         [HttpPost]
         [Authorize]
-        public IActionResult Become(BecomeDealerFormModel dealer)
+        public async Task<IActionResult> Become(BecomeDealerFormModel dealer)
         {
             var userId = this.User.Id();
 
-            var userIdAlreadyDealer = this.data
+            var userIdAlreadyDealer = await this.data
                 .Dealers
-                .Any(d => d.UserId == userId);
+                .AnyAsync(d => d.UserId == userId);
 
             if (userIdAlreadyDealer)
             {
@@ -47,8 +48,8 @@
                 UserId = userId
             };
 
-            this.data.Dealers.Add(dealerData);
-            this.data.SaveChanges();
+            await this.data.Dealers.AddAsync(dealerData);
+            await this.data.SaveChangesAsync();
 
             TempData[GlobalMessageKey] = "Thank you for becomming a dealer!";
 

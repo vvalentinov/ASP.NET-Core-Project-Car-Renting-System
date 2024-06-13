@@ -1,12 +1,13 @@
 ﻿namespace CarRentingSystem.Services.Cars
 {
     using System.Collections.Generic;
+    using System.Threading.Tasks;
     using CarRentingSystem.Models;
     using CarRentingSystem.Services.Cars.Models;
 
     public interface ICarService
     {
-        CarQueryServiceModel All(
+        Task<CarQueryServiceModel> AllAsync(
             string brand = null,
             string searchTerm = null,
             CarSorting sorting = CarSorting.DateCreated, 
@@ -14,11 +15,11 @@
             int carsPerPage = int.MaxValue,
             bool publicOnly = true);
 
-        IEnumerable<LatestCarServiceModel> Latest();
+        Task<IEnumerable<LatestCarServiceModel>> LatestAsync();
 
-        CarDetailsServiceModel Details(int carId);
+        Task<CarDetailsServiceModel> DetailsAsync(int carId);
 
-        int Create(
+        Task<int> CreateAsync(
             string brand,
             string model,
             string description,
@@ -27,7 +28,7 @@
             int categoryId,
             int dealerId);
 
-        bool Edit(
+        Task<bool> EditAsync(
             int carId,
             string brand,
             string model,
@@ -37,16 +38,16 @@
             int categoryId,
             bool isPublic);
 
-        IEnumerable<CarServiceModel> ByUser(string userId);
+        Task<IEnumerable<CarServiceModel>> ByUserAsync(string userId);
 
-        bool IsByDealer(int carId, int dealerId);
+        Task<bool> IsByDealerAsync(int carId, int dealerId);
 
-        void ChangeVisility(int carId);
+        Task ChangeVisilityAsync(int carId);
 
-        IEnumerable<string> AllBrands();
+        Task<IEnumerable<string>> AllBrandsAsync();
 
-        IEnumerable<CarCategoryServiceModel> AllCategories();
+        Task<IEnumerable<CarCategoryServiceModel>> AllCategoriesAsync();
 
-        bool CategoryExists(int categoryId);
+        Task<bool> CategoryExistsAsync(int categoryId);
     }
 }

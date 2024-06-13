@@ -26,15 +26,25 @@
             <div class="carousel-item @(i == 0 ? "active" : string.Empty)">
                 <img class="d-block w-100" src="@car.ImageUrl" alt="@car.Brand @car.Model">
                 <div class="carousel-caption d-none d-md-block">
-                    <h5><a class="btn btn-primary" asp-controller="Cars" asp-action="Details" asp-route-id="@car.Id" asp-route-information="@car.GetInformation()">@car.Year  @car.Brand @car.Model</a></h5>
+                    <h5>
+                        <a class="btn btn-primary"
+                           asp-controller="Cars"
+                           asp-action="Details"
+                           asp-route-id="@car.Id"
+                           asp-route-information="@car.GetInformation()">
+                            @car.Year  @car.Brand @car.Model
+                        </a>
+                    </h5>
                 </div>
             </div>
         }
     </div>
+
     <a class="carousel-control-prev" href="#carouselExampleControls" role="button" data-slide="prev">
         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
         <span class="sr-only">Previous</span>
     </a>
+
     <a class="carousel-control-next" href="#carouselExampleControls" role="button" data-slide="next">
         <span class="carousel-control-next-icon" aria-hidden="true"></span>
         <span class="sr-only">Next</span>

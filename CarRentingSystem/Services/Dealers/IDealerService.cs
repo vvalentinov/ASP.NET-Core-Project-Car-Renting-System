@@ -1,9 +1,11 @@
 ﻿namespace CarRentingSystem.Services.Dealers
 {
+    using System.Threading.Tasks;
+
     public interface IDealerService
     {
-        public bool IsDealer(string userId);
+        Task<bool> IsDealerAsync(string userId);
 
-        public int IdByUser(string userId);
+        Task<int> IdByUserAsync(string userId);
     }
 }
