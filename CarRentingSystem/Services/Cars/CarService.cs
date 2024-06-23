@@ -2,12 +2,14 @@
 {
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading.Tasks;
     using AutoMapper;
     using AutoMapper.QueryableExtensions;
     using CarRentingSystem.Data;
     using CarRentingSystem.Data.Models;
     using CarRentingSystem.Models;
-    using CarRentingSystem.Services.Cars.Models; 
+    using CarRentingSystem.Services.Cars.Models;
+    using Microsoft.EntityFrameworkCore;
 
     public class CarService : ICarService
     {
@@ -20,7 +22,7 @@
 			this.mapper = mapper.ConfigurationProvider;
 		}
 
-        public CarQueryServiceModel All(
+        public async Task<CarQueryServiceModel> AllAsync(
             string brand = null,
             string searchTerm = null,
             CarSorting sorting = CarSorting.DateCreated,
@@ -50,9 +52,9 @@
                 CarSorting.DateCreated or _ => carsQuery.OrderByDescending(c => c.Id)
             };
 
-            var totalCars = carsQuery.Count();
+            var totalCars = await carsQuery.CountAsync();
 
-            var cars = GetCars(carsQuery
+            var cars = await GetCarsAsync(carsQuery
                 .Skip((currentPage - 1) * carsPerPage)
                 .Take(carsPerPage));
 
@@ -65,23 +67,30 @@
             };
         }
 
-        public IEnumerable<LatestCarServiceModel> Latest()
-            => this.data
+        public async Task<IEnumerable<LatestCarServiceModel>> LatestAsync()
+            => await this.data
                 .Cars
                 .Where(c => c.IsPublic)
                 .OrderByDescending(c => c.Id)
                 .ProjectTo<LatestCarServiceModel>(this.mapper)
                 .Take(3)
-                .ToList();
+                .ToListAsync();
 
-        public CarDetailsServiceModel Details(int id)
-            => this.data
+        public async Task<CarDetailsServiceModel> DetailsAsync(int id)
+            => await this.data
                 .Cars
                 .Where(c => c.Id == id)
                 .ProjectTo<CarDetailsServiceModel>(this.mapper)
-                .FirstOrDefault();
+                .FirstOrDefaultAsync();
 
-        public int Create(string brand, string model, string description, string imageUrl, int year, int categoryId, int dealerId)
+        public async Task<int> CreateAsync(
+            string brand,
+            string model,
+            string description,
+            string imageUrl,
+            int year,
+            int categoryId,
+            int dealerId)
         {
             var carData = new Car
             {
@@ -95,13 +104,13 @@
                 IsPublic = false
             };
 
-            this.data.Cars.Add(carData);
-            this.data.SaveChanges();
+            await this.data.Cars.AddAsync(carData);
+            await this.data.SaveChangesAsync();
 
             return carData.Id;
         }
 
-        public bool Edit(
+        public async Task<bool> EditAsync(
             int id, 
             string brand, 
             string model, 
@@ -111,7 +120,7 @@
             int categoryId,
             bool isPublic)
         {
-            var carData = this.data.Cars.Find(id);
+            var carData = await this.data.Cars.FindAsync(id);
 
             if (carData == null)
             {
@@ -126,52 +135,41 @@
             carData.CategoryId = categoryId;
             carData.IsPublic = isPublic;
 
-            this.data.SaveChanges();
+            await this.data.SaveChangesAsync();
 
             return true;
         }
 
-        public IEnumerable<CarServiceModel> ByUser(string userId)
-            => GetCars(this.data
-                .Cars
-                .Where(c => c.Dealer.UserId == userId));
+        public async Task<IEnumerable<CarServiceModel>> ByUserAsync(string userId)
+            => await GetCarsAsync(this.data.Cars.Where(c => c.Dealer.UserId == userId));
 
-        public bool IsByDealer(int carId, int dealerId)
-            => this.data
-                .Cars
-                .Any(c => c.Id == carId && c.DealerId == dealerId);
+        public async Task<bool> IsByDealerAsync(int carId, int dealerId)
+            => await this.data.Cars.AnyAsync(c => c.Id == carId && c.DealerId == dealerId);
 
-        public void ChangeVisility(int carId)
+        public async Task ChangeVisilityAsync(int carId)
         {
-            var car = this.data.Cars.Find(carId);
+            var car = await this.data.Cars.FindAsync(carId);
 
             car.IsPublic = !car.IsPublic;
 
-            this.data.SaveChanges();
+            await this.data.SaveChangesAsync();
         }
 
-        public IEnumerable<string> AllBrands()
-            => this.data
+        public async Task<IEnumerable<string>> AllBrandsAsync()
+            => await this.data
                 .Cars
                 .Select(c => c.Brand)
                 .Distinct()
                 .OrderBy(br => br)
-                .ToList();
+                .ToListAsync();
 
-        public IEnumerable<CarCategoryServiceModel> AllCategories()
-            => this.data
-                .Categories
-                .ProjectTo<CarCategoryServiceModel>(this.mapper)
-                .ToList();
+        public async Task<IEnumerable<CarCategoryServiceModel>> AllCategoriesAsync()
+            => await this.data.Categories.ProjectTo<CarCategoryServiceModel>(this.mapper).ToListAsync();
 
-        public bool CategoryExists(int categoryId)
-            => this.data
-                .Categories
-                .Any(c => c.Id == categoryId);
+        public async Task<bool> CategoryExistsAsync(int categoryId)
+            => await this.data.Categories.AnyAsync(c => c.Id == categoryId);
 
-        private IEnumerable<CarServiceModel> GetCars(IQueryable<Car> carQuery)
-            => carQuery
-                .ProjectTo<CarServiceModel>(this.mapper)
-                .ToList();
+        private async Task<IEnumerable<CarServiceModel>> GetCarsAsync(IQueryable<Car> carQuery)
+            => await carQuery.ProjectTo<CarServiceModel>(this.mapper).ToListAsync();
     }
 }

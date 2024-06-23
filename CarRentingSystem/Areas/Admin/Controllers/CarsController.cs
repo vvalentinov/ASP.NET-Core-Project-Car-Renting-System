@@ -2,6 +2,7 @@
 {
     using CarRentingSystem.Services.Cars;
     using Microsoft.AspNetCore.Mvc;
+    using System.Threading.Tasks;
 
     public class CarsController : AdminController
     {
@@ -9,18 +10,16 @@
 
         public CarsController(ICarService cars) => this.cars = cars;
 
-        public IActionResult All()
+        public async Task<IActionResult> All()
         {
-            var cars = this.cars
-                .All(publicOnly: false)
-                .Cars;
+            var cars = (await this.cars.AllAsync(publicOnly: false)).Cars;
 
             return View(cars);
         }
 
-        public IActionResult ChangeVisibility(int id)
+        public async Task<IActionResult> ChangeVisibility(int id)
         {
-            this.cars.ChangeVisility(id);
+            await this.cars.ChangeVisilityAsync(id);
 
             return RedirectToAction(nameof(All));
         }

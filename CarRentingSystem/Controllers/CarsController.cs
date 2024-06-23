@@ -7,7 +7,7 @@
     using CarRentingSystem.Services.Dealers;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
-
+    using System.Threading.Tasks;
     using static WebConstants;
 
     public class CarsController : Controller
@@ -18,7 +18,7 @@
 
         public CarsController(
             ICarService cars,
-            IDealerService dealers, 
+            IDealerService dealers,
             IMapper mapper)
         {
             this.cars = cars;
@@ -26,16 +26,16 @@
             this.mapper = mapper;
         }
 
-        public IActionResult All([FromQuery] AllCarsQueryModel query)
+        public async Task<IActionResult> All([FromQuery] AllCarsQueryModel query)
         {
-            var queryResult = this.cars.All(
+            var queryResult = await this.cars.AllAsync(
                 query.Brand,
                 query.SearchTerm,
                 query.Sorting,
                 query.CurrentPage,
                 AllCarsQueryModel.CarsPerPage);
 
-            var carBrands = this.cars.AllBrands();
+            var carBrands = await this.cars.AllBrandsAsync();
 
             query.Brands = carBrands;
             query.TotalCars = queryResult.TotalCars;
@@ -43,18 +43,18 @@
 
             return View(query);
         }
-        
+
         [Authorize]
-        public IActionResult Mine()
+        public async Task<IActionResult> Mine()
         {
-            var myCars = this.cars.ByUser(this.User.Id());
+            var myCars = await this.cars.ByUserAsync(this.User.Id());
 
             return View(myCars);
         }
 
-        public IActionResult Details(int id, string information)
+        public async Task<IActionResult> Details(int id, string information)
         {
-            var car = this.cars.Details(id);
+            var car = await this.cars.DetailsAsync(id);
 
             if (information != car.GetInformation())
             {
@@ -65,43 +65,42 @@
         }
 
         [Authorize]
-        public IActionResult Add()
+        public async Task<IActionResult> Add()
         {
-            if (!this.dealers.IsDealer(this.User.Id()))
+            if (!await this.dealers.IsDealerAsync(this.User.Id()))
             {
                 return RedirectToAction(nameof(DealersController.Become), "Dealers");
             }
 
-            return View(new CarFormModel
-            {
-                Categories = this.cars.AllCategories()
-            });
+            var categories = await this.cars.AllCategoriesAsync();
+
+            return View(new CarFormModel { Categories = categories });
         }
 
         [HttpPost]
         [Authorize]
-        public IActionResult Add(CarFormModel car)
+        public async Task<IActionResult> Add(CarFormModel car)
         {
-            var dealerId = this.dealers.IdByUser(this.User.Id());
+            var dealerId = await this.dealers.IdByUserAsync(this.User.Id());
 
             if (dealerId == 0)
             {
                 return RedirectToAction(nameof(DealersController.Become), "Dealers");
             }
 
-            if (!this.cars.CategoryExists(car.CategoryId))
+            if (!await this.cars.CategoryExistsAsync(car.CategoryId))
             {
                 this.ModelState.AddModelError(nameof(car.CategoryId), "Category does not exist.");
             }
 
             if (!ModelState.IsValid)
             {
-                car.Categories = this.cars.AllCategories();
+                car.Categories = await this.cars.AllCategoriesAsync();
 
                 return View(car);
             }
 
-            var carId = this.cars.Create(
+            var carId = await this.cars.CreateAsync(
                 car.Brand,
                 car.Model,
                 car.Description,
@@ -116,16 +115,16 @@
         }
 
         [Authorize]
-        public IActionResult Edit(int id)
+        public async Task<IActionResult> Edit(int id)
         {
             var userId = this.User.Id();
 
-            if (!this.dealers.IsDealer(userId) && !User.IsAdmin())
+            if (!await this.dealers.IsDealerAsync(userId) && !User.IsAdmin())
             {
                 return RedirectToAction(nameof(DealersController.Become), "Dealers");
             }
 
-            var car = this.cars.Details(id);
+            var car = await this.cars.DetailsAsync(id);
 
             if (car.UserId != userId && !User.IsAdmin())
             {
@@ -134,40 +133,40 @@
 
             var carForm = this.mapper.Map<CarFormModel>(car);
 
-            carForm.Categories = this.cars.AllCategories();
+            carForm.Categories = await this.cars.AllCategoriesAsync();
 
             return View(carForm);
         }
 
         [HttpPost]
         [Authorize]
-        public IActionResult Edit(int id, CarFormModel car)
+        public async Task<IActionResult> Edit(int id, CarFormModel car)
         {
-            var dealerId = this.dealers.IdByUser(this.User.Id());
+            var dealerId = await this.dealers.IdByUserAsync(this.User.Id());
 
             if (dealerId == 0 && !User.IsAdmin())
             {
                 return RedirectToAction(nameof(DealersController.Become), "Dealers");
             }
 
-            if (!this.cars.CategoryExists(car.CategoryId))
+            if (!await this.cars.CategoryExistsAsync(car.CategoryId))
             {
                 this.ModelState.AddModelError(nameof(car.CategoryId), "Category does not exist.");
             }
 
             if (!ModelState.IsValid)
             {
-                car.Categories = this.cars.AllCategories();
+                car.Categories = await this.cars.AllCategoriesAsync();
 
                 return View(car);
             }
 
-            if (!this.cars.IsByDealer(id, dealerId) && !User.IsAdmin())
+            if (!await this.cars.IsByDealerAsync(id, dealerId) && !User.IsAdmin())
             {
                 return BadRequest();
             }
 
-            var edited = this.cars.Edit(
+            var edited = await this.cars.EditAsync(
                 id,
                 car.Brand,
                 car.Model,
